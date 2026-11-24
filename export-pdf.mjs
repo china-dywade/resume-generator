@@ -18,6 +18,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const require = createRequire(import.meta.url);
+const findBrowser = require('./tools/find-browser.cjs');
 const ResumeMD = require('./assets/resume-md.js');
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 
@@ -29,7 +30,7 @@ const USAGE = `用法：node export-pdf.mjs <简历.md> [选项]
       --html <文件.html>    额外导出一个可单独打开的 HTML
       --keep-html           保留中间产物 .build/*.html
       --title <标题>        文档标题（默认取简历姓名）
-      --template <名称>     classic | modern | compact
+      --template <名称>     ${ResumeMD.TEMPLATES.join(' | ')}
       --accent <#色值>      主题色，如 "#0f766e"
       --font <sans|serif>   字体族
       --font-size <14px>    正文字号
@@ -73,27 +74,6 @@ function parseArgs(argv) {
     else { console.error('多余的位置参数：' + a); process.exit(2); }
   }
   return args;
-}
-
-function findBrowser(explicit) {
-  const candidates = [
-    explicit,
-    process.env.RESUME_BROWSER,
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-    process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Google\\Chrome\\Application\\chrome.exe'),
-    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
-    '/usr/bin/google-chrome',
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser'
-  ].filter(Boolean);
-  for (const c of candidates) {
-    try { if (fs.existsSync(c)) return c; } catch (e) { /* ignore */ }
-  }
-  return null;
 }
 
 function toFileUrl(p) {

@@ -399,6 +399,44 @@
   text-align: left;
 }
 
+/* 书刊：双线刊头、宋体标题和轻量的条目索引。 */
+.tpl-folio { --folio-ink: color-mix(in srgb, #34261f 88%, var(--r-accent)); }
+.tpl-folio .r-header { border-top: 4px solid var(--folio-ink); border-bottom: 3px double var(--folio-ink); padding: 12px 0 10px; }
+.tpl-folio .r-name, .tpl-folio .r-section-title { font-family: var(--r-font-serif-stack); color: var(--folio-ink); }
+.tpl-folio .r-name { font-size: 2.45em; letter-spacing: .12em; }
+.tpl-folio .r-subtitle { color: var(--folio-ink); font-weight: 500; }
+.tpl-folio .r-section { margin-top: 12px; }
+.tpl-folio .r-section-title { margin-bottom: 5px; display: flex; align-items: center; gap: .75em; border: 0; font-size: 1.18em; }
+.tpl-folio .r-section-title::after { content: ""; flex: 1; border-top: 1px solid #c7bdb0; }
+.tpl-folio .r-entry-meta { color: var(--folio-ink); font-family: Georgia, var(--r-font-serif-stack); }
+.tpl-folio .r-quote { background: #f7f4f0; border-left-color: var(--folio-ink); }
+
+/* 蓝图：深蓝抬头、工程图细网格与等宽日期。 */
+.tpl-blueprint { --blueprint-ink: color-mix(in srgb, #132c45 78%, var(--r-accent)); }
+.tpl-blueprint .r-header {
+  padding: 15px 20px; border-left: 5px solid #74c9d7; background-color: var(--blueprint-ink);
+  background-image: linear-gradient(90deg, #ffffff0c 1px, transparent 1px), linear-gradient(#ffffff0c 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+.tpl-blueprint .r-name { color: #fff; font-size: 2.1em; }
+.tpl-blueprint .r-subtitle { color: #c0edf1; }
+.tpl-blueprint .r-contacts { color: #f1f6fa; }
+.tpl-blueprint .r-contacts a { border-color: #8ba7b5; }
+.tpl-blueprint .r-section-title { color: var(--blueprint-ink); border-bottom: 1px solid #a7bac9; }
+.tpl-blueprint .r-section-title::before { content: ""; display: inline-block; width: .55em; height: .55em; margin-right: .55em; border: 2px solid currentColor; }
+.tpl-blueprint .r-entry-meta { color: var(--blueprint-ink); font-family: Consolas, monospace; font-size: .84em; }
+.tpl-blueprint .r-quote { border-color: var(--blueprint-ink); background: #f1f5f8; }
+
+/* 青庭：浅青底色、不对称圆角与胶囊章节签。 */
+.tpl-sage { --sage-ink: color-mix(in srgb, #265445 86%, var(--r-accent)); }
+.tpl-sage .r-header { background: #edf4ee; border-radius: 0 26px 0 0; padding: 15px 20px; border-left: 4px solid var(--sage-ink); }
+.tpl-sage .r-name { color: var(--sage-ink); font-size: 2.15em; letter-spacing: .09em; }
+.tpl-sage .r-subtitle { color: var(--sage-ink); }
+.tpl-sage .r-section-title { display: table; max-width: 100%; border: 0; padding: 2px 12px; border-radius: 20px; background: #e7f0e9; color: var(--sage-ink); }
+.tpl-sage .r-list li::marker { color: var(--sage-ink); }
+.tpl-sage .r-table th { color: var(--sage-ink); }
+.tpl-sage .r-quote { background: #f4f7f1; border-color: #9aaf9c; }
+
 /* ---------------------------------------------------------------- 模板八：双栏（左栏由 rail 配置指定） */
 /* 用浮动而不是 flex：分页时左栏不会把整块内容顶到下一页，打印更稳 */
 

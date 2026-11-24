@@ -299,7 +299,8 @@
       timeline: '时间轴（左侧连线）',
       minimal: '极简（无框线）',
       banner: '色块（整条标题栏）',
-      sidebar: '侧栏标题（左侧留白栏）'
+      sidebar: '侧栏标题（左侧留白栏）',
+      folio: '书刊', blueprint: '蓝图', sage: '青庭'
     };
     MD.TEMPLATES.forEach(function (t) {
       var o = document.createElement('option');
@@ -334,6 +335,9 @@
 
   function syncControls(s) {
     $('tplSelect').value = s.template;
+    $('templatePicks').querySelectorAll('button').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.template === s.template));
+    });
     $('columnsSelect').value = s.columns;
     // 手写的字号可能不在下拉选项里：动态补一项，别让界面显示成「跟随正文」而文档里另有其值
     var railFs = s.railFontSize ? String(parseFloat(s.railFontSize)) : '';
@@ -704,7 +708,7 @@
   }
 
   function saveAs() {
-    var input = window.prompt('另存为（浏览器内的文档名）：', state.name || '我的简历');
+    var input = window.prompt('复制草稿（保存在此浏览器中），新草稿名称：', state.name || '我的简历');
     if (input == null) return;
     var name = input.trim();
     if (!name) return;
@@ -743,16 +747,19 @@
     toast('已删除');
   }
 
-  function downloadMD() {
-    var blob = new Blob([state.markdown], { type: 'text/markdown;charset=utf-8' });
+  function downloadBlob(blob, name) {
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = fileName();
+    a.download = name;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     window.setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+  }
+
+  function downloadMD() {
+    downloadBlob(new Blob([state.markdown], { type: 'text/markdown;charset=utf-8' }), fileName());
     toast('已下载 ' + fileName());
   }
 
@@ -897,11 +904,58 @@
     }).catch(function () { toast('读取文件失败'); });
   }
 
-  function exportPdf() {
+  function printResume() {
     render();
     document.title = fileName().replace(/\.md$/i, '');
     toast('在打印对话框中选择「另存为 PDF」；建议取消勾选“页眉和页脚”', 4200);
     window.setTimeout(function () { window.print(); }, 160);
+  }
+
+  const localPdf = location.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(location.hostname);
+  async function embedPdfImage(original) {
+    let image = original;
+    if (new URL(original.src).origin !== location.origin) {
+      image = new Image();
+      image.crossOrigin = 'anonymous';
+      image.src = original.src;
+    }
+    try {
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      canvas.getContext('2d').drawImage(image, 0, 0);
+      return canvas.toDataURL('image/png');
+    } catch {
+      throw new Error('图片无法读取，请用「证件照」重新插入，或使用「打印简历」。');
+    }
+  }
+
+  async function downloadPdf() {
+    if (!localPdf) return printResume();
+    render();
+    const title = fileName().replace(/\.md$/i, '').replace(/\.pdf$/i, '') || '我的简历';
+    const markdown = state.markdown;
+    const buttons = [$('btnPdf'), $('btnPdfMobile')];
+    buttons.forEach(button => { button.disabled = true; button.textContent = '正在生成…'; });
+    try {
+      const photos = Array.from(sheet.querySelectorAll('img')).filter(img => !img.src.startsWith('data:'));
+      const images = await Promise.all(photos.map(embedPdfImage));
+      const response = await fetch('/api/pdf', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({title, markdown, images})
+      });
+      if (!response.ok || response.headers.get('content-type') !== 'application/pdf') {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || '请重启本地简历服务后再下载，或使用「打印简历」。');
+      }
+      downloadBlob(await response.blob(), title + '.pdf');
+      toast('已开始下载 ' + title + '.pdf');
+    } catch (err) {
+      toast(err instanceof TypeError ? '无法连接本地简历服务，请确认服务已启动。' : err.message, 6500);
+    } finally {
+      buttons.forEach(button => { button.disabled = false; button.textContent = '下载 PDF'; });
+    }
   }
 
   /* ------------------------------------------------------------ 编辑器小工具 */
@@ -1227,6 +1281,16 @@
   /* ------------------------------------------------------------ 事件绑定 */
 
   function bind() {
+    window.bindResumeAssistant({
+      readSettings: function (group) { return readJSON('resume-gen:ai:' + group, null); },
+      writeSettings: function (group, value) { return writeJSON('resume-gen:ai:' + group, value); },
+      getDocument: function () { return { name: state.name, markdown: state.markdown }; },
+      getSelection: function () {
+        return prefs.mode === 'markdown' && [editor.selectionStart, editor.selectionEnd];
+      },
+      apply: formApi().apply,
+      notice: toast
+    });
     editor.addEventListener('input', onEditorInput);
 
     editor.addEventListener('keydown', function (ev) {
@@ -1249,7 +1313,7 @@
       }
       if (mod && ev.key.toLowerCase() === 'p') {
         ev.preventDefault();
-        exportPdf();
+        printResume();
         return;
       }
       if (ev.key === 'Enter' && !ev.shiftKey) {
@@ -1312,7 +1376,13 @@
       tools[i].addEventListener('click', function () { applyAct(this.dataset.act); });
     }
 
-    $('btnPdf').addEventListener('click', exportPdf);
+    if (!localPdf) {
+      [$('btnPdf'), $('btnPdfMobile')].forEach(button => { button.textContent = '打印 / 存为 PDF'; button.title = '打开打印窗口'; });
+      $('pdfTip').textContent = '在打印窗口选择「另存为 PDF」即可保存全部页面';
+      $('btnPrint').hidden = true;
+    }
+    $('btnPrint').addEventListener('click', printResume);
+    $('btnPdf').addEventListener('click', downloadPdf);
     // 导出 / 下载 / 保存这几条路在内置浏览器里最容易失败，点了就提醒一次。
     // 注意用冒泡阶段：捕获阶段会让警告先弹出、紧接着被按钮自己的 toast 覆盖掉，用户根本看不到
     document.addEventListener('click', function (ev) {
@@ -1322,7 +1392,7 @@
         warnInAppBrowser();
       }
     });
-    $('btnPdfMobile').addEventListener('click', exportPdf);
+    $('btnPdfMobile').addEventListener('click', downloadPdf);
     $('btnDownload').addEventListener('click', downloadMD);
     $('btnSaveDisk').addEventListener('click', saveToDisk);
     $('btnNew').addEventListener('click', newDoc);
@@ -1376,7 +1446,16 @@
 
     $('docList').addEventListener('change', function () { openDoc(this.value); });
 
-    $('tplSelect').addEventListener('change', function () { patchSettings({ template: this.value }); });
+    function chooseTemplate(template) {
+      if (MD.normalizeSettings(MD.splitFrontMatter(state.markdown).meta).template === template) return;
+      pushUndo(true);
+      patchSettings({ template: template });
+    }
+    $('tplSelect').addEventListener('change', function () { chooseTemplate(this.value); });
+    $('templatePicks').addEventListener('click', function (event) {
+      var button = event.target.closest('button[data-template]');
+      if (button) chooseTemplate(button.dataset.template);
+    });
 
     // 栏数是独立设置：任意样式都能配双栏；从单栏切过去且还没配左栏时自动填一次
     $('columnsSelect').addEventListener('change', function () {
@@ -1532,7 +1611,7 @@
         if (state.fileHandle) saveToDisk(); else saveCurrent();
       } else if (key === 'p') {
         ev.preventDefault();
-        exportPdf();
+        printResume();
       } else if (key === 'z' && prefs.mode === 'form') {
         ev.preventDefault();
         if (ev.shiftKey) redoLast(); else undoLast();

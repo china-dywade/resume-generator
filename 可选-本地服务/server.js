@@ -25,6 +25,7 @@ const crypto = require('crypto');
 const ROOT = fs.existsSync(path.join(__dirname, 'index.html'))
   ? __dirname
   : path.dirname(__dirname);
+const handleAssistant = require(path.join(ROOT, 'tools', 'resume-ai.cjs'));
 const STATE_FILE = path.join(ROOT, '.server.json');
 
 function readArg(name, fallback) {
@@ -224,6 +225,13 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (pathname === '/api/pdf') {
+    const downloadPdf = require(path.join(ROOT, 'tools', 'download-pdf.cjs'));
+    return downloadPdf(req, res, PORT, sendJson);
+  }
+  if (pathname === '/api/rewrite' || pathname === '/api/models') {
+    return handleAssistant(req, res, PORT, sendJson, pathname);
+  }
   if (pathname === '/__alive') { handleAlive(req, res); return; }
   if (pathname === '/__info') { handleInfo(req, res); return; }
   if (pathname === '/__shutdown') { handleShutdown(req, res); return; }
@@ -236,7 +244,7 @@ server.listen(PORT, '127.0.0.1', () => {
   startHeartbeat();
   console.log('');
   console.log('  简历生成器已启动：http://127.0.0.1:' + PORT);
-  console.log('  编辑左侧 Markdown，右侧实时预览，点「导出 PDF」在打印对话框里选「另存为 PDF」。');
+  console.log('  编辑左侧 Markdown，右侧实时预览，点「下载 PDF」保存整份简历。');
   console.log('  Chromium 浏览器里还可以把它「安装为应用」，之后离线也能打开。');
   console.log(EXIT_AFTER > 0
     ? '  窗口关掉后 ' + EXIT_AFTER + ' 秒没有新窗口接入就会自动退出（--exit-after 0 可禁用）。'

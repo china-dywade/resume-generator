@@ -8,7 +8,7 @@
  *   - 激活时清理旧版本缓存。
  * 改动静态资源后请把 VERSION 加一。
  */
-const VERSION = 'v2.1.0';   // 每次发版都要加一：activate 时靠它清掉旧缓存
+const VERSION = 'v2.5.1';   // 每次发版都要加一：activate 时靠它清掉旧缓存
 const CACHE = 'resume-gen-' + VERSION;
 
 const PRECACHE = [
@@ -17,9 +17,13 @@ const PRECACHE = [
   './manifest.webmanifest',
   './assets/resume.css',
   './assets/app.css',
+  './assets/templates/folio.png',
+  './assets/templates/blueprint.png',
+  './assets/templates/sage.png',
   './assets/resume-md.js',
   './assets/resume-form.js',
   './assets/form-view.js',
+  './assets/assistant.js',
   './assets/app.js',
   './assets/icons/icon-192.png',
   './assets/icons/icon-256.png',

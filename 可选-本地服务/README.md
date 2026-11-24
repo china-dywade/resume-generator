@@ -6,7 +6,7 @@
 - 或者直接双击 `简历生成器-单文件.html` / `index.html`
 - 或者用在线版 <https://beiwei91.github.io/resume-generator/>（走 HTTPS，更不需要本地服务）
 
-它们只服务一个场景：**把应用安装成 PWA**（桌面图标、独立窗口、离线缓存）。
+AI 简历助手使用本目录的 Node 服务连接模型，启动和配置见[项目说明](../README.md)。本目录还支持**把应用安装成 PWA**（桌面图标、独立窗口、离线缓存）。
 Service Worker 只能在 `localhost` / HTTPS 下注册，所以那时需要一个安全上下文。
 
 ## 若用在线版（GitHub Pages，推荐）

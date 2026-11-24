@@ -26,6 +26,9 @@ html = html.replace(/[ \t]*<script src="([^"]+)"><\/script>\r?\n?/g, (m, src) =>
   return '<script>\n/* ==== ' + src + ' ==== */\n' + js.trim() + '\n</script>\n';
 });
 
+html = html.replace(/src="(assets\/templates\/[a-z]+\.png)"/g, (_, rel) =>
+  'src="data:image/png;base64,' + fs.readFileSync(path.join(ROOT, rel)).toString('base64') + '"');
+
 /* 标签页图标改用内嵌 data URI，避免依赖外部文件 */
 const iconRel = 'assets/icons/icon-192.png';
 html = html.replace(/[ \t]*<link rel="icon"[^>]*>\r?\n?/g, () => {

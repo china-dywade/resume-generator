@@ -31,7 +31,7 @@
     photoShape: 'rounded'
   };
   // 模板只表示「样式」；栏数由 columns 单独决定（旧的 template: twocol 仍兼容，见 normalizeSettings）
-  var TEMPLATES = ['classic', 'modern', 'compact', 'timeline', 'minimal', 'banner', 'sidebar'];
+  var TEMPLATES = ['classic', 'modern', 'compact', 'timeline', 'minimal', 'banner', 'sidebar', 'folio', 'blueprint', 'sage'];
   var TWO_COL_LEGACY = 'twocol';
   var FONTS = ['sans', 'serif'];
   var PHOTO_ALIGNS = ['right', 'left'];

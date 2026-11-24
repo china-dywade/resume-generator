@@ -13,13 +13,13 @@ try {
   document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
 } catch (e) { /* 读不到偏好就按浅色 */ }
 </script>
-<link rel="stylesheet" href="assets/resume.css?v=2.1.0">
-<link rel="stylesheet" href="assets/app.css?v=2.1.0">
+<link rel="stylesheet" href="assets/resume.css?v=2.5.1">
+<link rel="stylesheet" href="assets/app.css?v=2.5.1">
 <meta name="application-name" content="简历生成器">
 <!-- 版本号：静态资源都带 ?v= 查询串，改版本号即可让浏览器 / CDN 立刻取到新文件。
      发布前记得把这里和下面 4 处脚本引用的版本号一起改掉。 -->
-<meta name="app-version" content="2.1.0">
-<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png?v=2.1.0">
+<meta name="app-version" content="2.5.1">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png?v=2.5.1">
 <style id="printPageStyle">@page { size: A4; }</style>
 </head>
 <body>
@@ -43,7 +43,7 @@ try {
 
     <div class="appbar-main" id="appbarMain">
       <button id="btnNew" class="btn" type="button">新建</button>
-      <button id="btnSaveAs" class="btn" type="button">另存为</button>
+      <button id="btnSaveAs" class="btn" type="button">复制草稿</button>
       <button id="btnDelDoc" class="btn" type="button">删除</button>
       <span class="bar-sep"></span>
       <button id="btnOpen" class="btn" type="button">导入 MD</button>
@@ -54,6 +54,7 @@ try {
       <button id="btnRestore" class="btn" type="button" title="从备份 JSON 恢复简历（可选择覆盖或只补充）">恢复备份</button>
       <input id="backupInput" type="file" accept=".json,application/json" hidden>
       <span class="bar-sep"></span>
+      <button id="btnPrint" class="btn" type="button">打印简历</button>
       <button id="btnHelp" class="btn" type="button">语法速查</button>
     </div>
 
@@ -61,10 +62,10 @@ try {
       <a class="btn gh-link" id="ghLink" href="https://github.com/beiwei91/resume-generator"
          target="_blank" rel="noreferrer"
          title="本项目开源在 GitHub —— 欢迎点个 Star ⭐，有问题或想要新功能也可以提 Issue（谢谢喵 🐾）"><span class="star">★</span> GitHub</a>
-      <button id="btnPdf" class="btn btn-primary" type="button">导出 PDF</button>
+      <button id="btnPdf" class="btn btn-primary" type="button">下载 PDF</button>
       <button id="btnTools" class="btn btn-ellipsis" type="button" aria-expanded="false"
               aria-controls="appbarMain" aria-label="更多操作"
-              title="更多操作：新建 / 另存为 / 导入导出 / 备份 / 语法速查">⋯</button>
+              title="更多操作：新建 / 复制草稿 / 导入导出 / 备份 / 语法速查">⋯</button>
     </div>
   </header>
 
@@ -83,7 +84,7 @@ try {
   <div class="mobile-view" id="mobileView">
     <button class="mv-btn is-active" type="button" data-view="edit">✎ 编辑</button>
     <button class="mv-btn" type="button" data-view="preview">👁 预览</button>
-    <button class="mv-btn mv-btn-pdf" type="button" id="btnPdfMobile" title="导出 PDF（打印对话框里选「另存为 PDF」并取消页眉页脚）">导出 PDF</button>
+    <button class="mv-btn mv-btn-pdf" type="button" id="btnPdfMobile" title="下载整份简历的 PDF 文件">下载 PDF</button>
   </div>
 
   <input id="fileInput" type="file" accept=".md,.markdown,.txt,text/markdown" hidden>
@@ -98,6 +99,7 @@ try {
           <button class="mode-tab is-active" type="button" data-mode="form">表单</button>
           <button class="mode-tab" type="button" data-mode="markdown">Markdown</button>
         </div>
+        <button id="btnAssistant" class="tool" type="button" aria-haspopup="dialog">AI 助手</button>
         <button id="btnUndo" class="tool" type="button" title="撤销上一步操作 (Ctrl+Z)">撤销</button>
         <button id="btnRedo" class="tool" type="button" title="重做 (Ctrl+Y)">重做</button>
         <div class="tools" id="mdTools" hidden>
@@ -143,6 +145,12 @@ try {
             title="自动排版：内容超过一页就收紧字号 / 行距 / 页边距 / 证件照压进一页；不足一页就放大填满（整体可撤销）">自动排版</button>
           <button id="btnMore" class="tool" type="button" aria-expanded="false">排版 ▾</button>
         </div>
+      </div>
+
+      <div id="templatePicks" class="template-picks" role="group" aria-label="一键切换模板">
+        <button type="button" data-template="folio" aria-pressed="false"><img alt="" width="52" height="48" src="assets/templates/folio.png"><span>书刊</span></button>
+        <button type="button" data-template="blueprint" aria-pressed="false"><img alt="" width="52" height="48" src="assets/templates/blueprint.png"><span>蓝图</span></button>
+        <button type="button" data-template="sage" aria-pressed="false"><img alt="" width="52" height="48" src="assets/templates/sage.png"><span>青庭</span></button>
       </div>
 
       <div class="settings-panel" id="settingsPanel" hidden>
@@ -247,9 +255,46 @@ try {
     <span class="dot">·</span>
     <span id="statusVersion" class="ver" title="界面版本号（用它确认有没有加载到最新版）"></span>
     <span class="grow"></span>
-    <span class="tip">打印对话框里选「另存为 PDF」并取消页眉页脚</span>
+    <span class="tip" id="pdfTip">下载 PDF 会将全部页面保存为一个文件</span>
   </footer>
 </div>
+
+<dialog id="aiDialog" aria-labelledby="aiTitle">
+  <header class="ai-heading"><h2 id="aiTitle">AI 简历助手</h2><button id="aiClose" type="button" class="tool" aria-label="关闭助手">关闭</button></header>
+  <div id="aiLocalHelp" hidden>
+    <p>AI 助手需要本地服务。在项目目录运行 <code>npm start</code>，然后打开服务页面。</p>
+    <a href="http://127.0.0.1:5174/" target="_blank" rel="noopener noreferrer">打开本地简历生成器 ↗</a>
+    <p>要带上当前草稿，可先在此页下载 MD，再到服务页面导入。</p>
+  </div>
+  <form id="aiForm">
+    <div class="ai-fields">
+      <label>改写范围<select id="aiScope"></select></label>
+      <label>模型服务<select id="aiProvider"><option value="deepseek">DeepSeek</option><option value="openai">OpenAI</option><option value="ollama">本机 Ollama</option></select></label>
+    </div>
+    <label id="aiKeyRow">DeepSeek API Key<input type="password" id="aiKey" autocomplete="off" placeholder="输入 API Key"></label>
+    <fieldset id="aiOpenAI" class="ai-openai" hidden disabled>
+      <legend>OpenAI 连接设置</legend>
+      <label>OpenAI API Key<input type="password" id="aiOpenAIKey" autocomplete="off" placeholder="输入 API Key"></label>
+      <div class="ai-fields">
+        <div>
+          <label id="aiManualModelRow">模型名称<input id="aiOpenAIModel" value="gpt-4.1-mini" maxlength="128"></label>
+          <label id="aiModelChoicesRow" hidden>可用模型<select id="aiModelChoices"></select></label>
+        </div>
+        <label>协议<select id="aiProtocol"><option value="responses">Responses</option><option value="chat-completions">Chat Completions</option></select></label>
+      </div>
+      <label>API 地址<input id="aiBaseUrl" type="url" value="https://api.openai.com/v1" spellcheck="false"></label>
+      <label>HTTP(S) 代理（可选）<input id="aiProxy" type="url" placeholder="留空直连，例如 http://127.0.0.1:7890" spellcheck="false" autocomplete="off"></label>
+      <div><button type="button" class="tool" id="aiFetchModels">获取可用模型</button> <span id="aiModelStatus" role="status"></span></div>
+    </fieldset>
+    <label id="aiModelRow" hidden>本机模型名称<input id="aiModel" placeholder="填写 ollama list 中的模型名" maxlength="128"></label>
+    <small id="aiCacheNote" role="status">连接配置（含密钥）自动保存在此浏览器中。</small>
+    <label>将发送的原文<textarea id="aiSource" readonly rows="4"></textarea></label>
+    <label>修改要求<textarea id="aiInstruction" rows="2" required maxlength="2000" placeholder="例如：面向全栈工程师岗位，把这段经历精简成两条，保留已有数据。"></textarea></label>
+    <label id="aiResultRow" hidden>修改建议 · 可编辑<textarea id="aiResult" rows="5"></textarea></label>
+    <p id="aiStatus" role="status" aria-live="polite"></p>
+    <footer><button id="aiGenerate" type="submit" class="btn btn-primary">生成建议</button><button id="aiApply" type="button" class="btn btn-primary" hidden>应用修改</button></footer>
+  </form>
+</dialog>
 
 <div class="modal" id="helpModal" hidden>
   <div class="modal-card">
@@ -278,7 +323,7 @@ try {
           <tr><td><code>| 技能 | 说明 |</code><br><code>| --- | --- |</code></td><td>表格（第二行是分隔行）</td></tr>
           <tr><td><code>&gt; 引用</code></td><td>高亮引用块（适合个人简介）</td></tr>
           <tr><td><code>---</code> 单独一行</td><td>手动分页；<code>***</code> 是分隔线</td></tr>
-          <tr><td><code>---<br>template: modern<br>accent: #0f766e<br>---</code></td><td>文首配置块：模板 / 主色 / 字体 / 字号 / 行距 / 页边距（界面上的排版控件会自动改写这里）<br>样式共 7 套（栏数是独立设置：配置块写 <code>columns: 2</code>）：<code>classic</code> 经典居中 · <code>modern</code> 现代色块 · <code>compact</code> 紧凑单行 · <code>timeline</code> 时间轴 · <code>minimal</code> 极简 · <code>banner</code> 整条色块标题 · <code>sidebar</code> 左侧栏标题 · <br>双栏不需要手写配置：切到 <code>twocol</code> 时会自动把「技能 / 证书 / 荣誉 / 教育」这类章节放进左栏，
+          <tr><td><code>---<br>template: modern<br>accent: #0f766e<br>---</code></td><td>文首配置块：模板 / 主色 / 字体 / 字号 / 行距 / 页边距（界面上的排版控件会自动改写这里）<br>样式共 10 套（栏数是独立设置：配置块写 <code>columns: 2</code>）：<code>classic</code> 经典居中 · <code>modern</code> 现代色块 · <code>compact</code> 紧凑单行 · <code>timeline</code> 时间轴 · <code>minimal</code> 极简 · <code>banner</code> 整条色块标题 · <code>sidebar</code> 左侧栏标题 · <code>folio</code> 书刊 · <code>blueprint</code> 蓝图 · <code>sage</code> 青庭 <br>双栏不需要手写配置：切到 <code>twocol</code> 时会自动把「技能 / 证书 / 荣誉 / 教育」这类章节放进左栏，
   之后在每张章节卡片上点「→ 左栏 / ← 右栏」即可调整（也可以在配置块手写 <code>rail: 技能清单, 证书与荣誉</code>）</td></tr>
           <tr><td><code>photo: ./证件照.jpg</code><br><code>photoSize: 26mm</code><br><code>photoAlign: right</code><br><code>photoShape: rounded</code></td><td>抬头证件照：<code>photoSize</code> 是宽度（高度按图片比例），<code>photoAlign</code> 取 <code>right</code>/<code>left</code>，<code>photoShape</code> 取 <code>rounded</code>/<code>circle</code>/<code>square</code>。<br>也可以直接在姓名下一行写 <code>![证件照](照片路径)</code>。<br>地址支持本地相对路径、网址、<code>file://</code> 或内嵌 data URI —— 推荐点工具栏的「证件照」按钮插入（自动压缩为内嵌图片，跟着 .md 文件走，导出 PDF 不会丢图）</td></tr>
           <tr><td><code>![说明](图片路径)</code></td><td>正文里插入图片，最大宽度不会超出纸张</td></tr>
@@ -291,9 +336,10 @@ try {
 
 <div class="toast" id="toast" hidden></div>
 
-<script src="assets/resume-md.js?v=2.1.0"></script>
-<script src="assets/resume-form.js?v=2.1.0"></script>
-<script src="assets/form-view.js?v=2.1.0"></script>
-<script src="assets/app.js?v=2.1.0"></script>
+<script src="assets/resume-md.js?v=2.5.1"></script>
+<script src="assets/resume-form.js?v=2.5.1"></script>
+<script src="assets/form-view.js?v=2.5.1"></script>
+<script src="assets/assistant.js?v=2.5.1"></script>
+<script src="assets/app.js?v=2.5.1"></script>
 </body>
 </html>

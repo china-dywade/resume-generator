@@ -1,10 +1,12 @@
 {
   "name": "resume-generator",
-  "version": "2.1.0",
+  "version": "2.5.1",
   "private": true,
   "description": "简历生成器：表单 / Markdown 双模式编辑，实时 A4 预览 + 导出 PDF（零依赖，双击即用）",
   "scripts": {
-    "test": "node tests/smoke.mjs && node tests/form.mjs && node tests/edge.mjs",
+    "start": "node 可选-本地服务/server.js --port 5174 --exit-after 0",
+    "dev": "npm start",
+    "test": "node --test tests/openai-proxy.mjs && node tests/smoke.mjs && node tests/form.mjs && node tests/edge.mjs",
     "verify": "node tests/verify-export.mjs",
     "verify:app": "node tests/verify-app.mjs",
     "pdf": "node export-pdf.mjs resume.sample.md -o 简历.pdf",
@@ -13,6 +15,15 @@
     "icons": "node tools/make-icons.mjs",
     "launchers": "node tools/make-launchers.mjs"
   },
-  "keywords": ["resume", "markdown", "pdf", "a4"],
-  "license": "MIT"
+  "keywords": [
+    "resume",
+    "markdown",
+    "pdf",
+    "a4"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "playwright-core": "1.60.0",
+    "undici": "6.29.1"
+  }
 }
